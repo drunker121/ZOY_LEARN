@@ -18,12 +18,14 @@ const StudentDB = () => {
     getting();
   }, []);
 
+
+
   const deleteStudent = async (_id) => {
     try {
       const res = await axios.delete(`http://localhost:5000/student/${_id}`);
       alert(res.data.status);
     } catch (error) {
-      console.log("error while deleting student", error);
+      console.log("error in Deleting", error);
     }
     getting();
   };

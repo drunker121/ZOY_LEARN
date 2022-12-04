@@ -1,7 +1,6 @@
 const mongoose= require('mongoose');
 
 const userdetails = new mongoose.Schema({
-    // ident: Number,
     type: String,
     name:String,
     email:String,
@@ -13,7 +12,6 @@ const userdetails = new mongoose.Schema({
 )
 
 const studentdetails = new mongoose.Schema({
-    // ident: String,
     type: String,
     name:String,
     fname:String,
@@ -28,7 +26,6 @@ const studentdetails = new mongoose.Schema({
 )
 
 const teacherdetails = new mongoose.Schema({
-    // ident: Number,
     type: String,
     name:String,
     subject: String,

@@ -1,30 +1,29 @@
 const express = require('express');
-const app = express();
 const mongoose  = require('mongoose');
 const cors  = require('cors');
+const PORT=process.env.PORT||5000
+const app = express();
+
 app.use(express.json());
-app.use(express.urlencoded());
+// app.use(express.urlencoded());
 app.use(cors());
 
-const mongoURL = 'mongodb://nitish:akshita123@ac-2axztxf-shard-00-00.s3mxonq.mongodb.net:27017,ac-2axztxf-shard-00-01.s3mxonq.mongodb.net:27017,ac-2axztxf-shard-00-02.s3mxonq.mongodb.net:27017/?ssl=true&replicaSet=atlas-3aa27z-shard-0&authSource=admin&retryWrites=true&w=majority'
+const mongodb=require('./mongodb')
+mongodb();
 
-mongoose.connect(mongoURL, {useNewUrlParser: true, useUnifiedTopology: true})
-.then(() => {
-    console.log('conncted to db');
-})
-.catch((err) => {
-    console.log(err);
+app.listen(PORT, ()=> {
+    console.log(`hello from port ${PORT}` );
 })
 
-app.listen(5000, ()=> {
-    console.log('hello from port 5000');
-})
-
-require('./userDetails');
+require('./models/userDetails');
 
 const User = mongoose.model('usersinfo');
 const Student = mongoose.model('studentinfo');
 const Teacher = mongoose.model('teacherinfo');
+
+app.get("/",(req,res)=>{
+    res.json({message:`successfully running on port  ${PORT}`});
+})
 
 app.post('/register', (req, res) => {
     const {name, email, password} = req.body;
@@ -141,6 +140,7 @@ app.put('/student/edit/:id', async (req, res) => {
 })
 
 app.delete('/teacher/:id', async (req, res) => {
+    
     try {
         await Teacher.deleteOne({_id: req.params.id});
         res.send({status: 'teacher deleted'});
@@ -165,7 +165,7 @@ app.get('/students', async (req, res) => {
         res.status(200).json(dt);
         console.log(dt);
     } catch (error) {
-        console.log('koi error hai');
+        console.log('error');
         res.status(404).json({message: 'student not found'});
     }
 })

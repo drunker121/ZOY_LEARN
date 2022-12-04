@@ -31,6 +31,7 @@ const SignUpPage = () => {
                 axios.post('http://localhost:5000/register', userdetails)
                 .then(res => {
                     alert(res.data.status);  
+                    // console.log(res.data)
                     navigate('/login');
                 })
             }
@@ -73,4 +74,4 @@ const SignUpPage = () => {
   )
 }
 
-export default SignUpPage
+export default SignUpPage;
