@@ -1,8 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose  = require('mongoose');
 const cors  = require('cors');
 const PORT=process.env.PORT||5000
 const app = express();
+const jwt = require("jsonwebtoken")
+const RefreshModel = require("./models/refreshToken")
+
+
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET
 
 app.use(express.json());
 // app.use(express.urlencoded());
@@ -52,7 +59,13 @@ app.post('/login', (req, res) => {
     User.findOne({email: email}, (err, user) => {
         if(user) {
             if(password === user.password) {
-                res.send({status: 'login successful', user: user});
+                const accessToken = jwt.sign({ name: user.name, email: user.email, _id: user._id, createdAt: Date.now()},JWT_ACCESS_SECRET,{ expiresIn: '1h'})
+                const refreshToken = jwt.sign({ name: user.name, email: user.email, _id: user._id, createdAt: Date.now()},JWT_REFRESH_SECRET,{ expiresIn: '1d'})
+                RefreshModel.create({ token: refreshToken }).then((result,error) => {
+                    if(error)
+                        return res.send({status: 'incorrect password'});    
+                })
+                res.send({status: 'login successful', accessToken, refreshToken });
             }
             else {
                 res.send({status: 'incorrect password'});
@@ -64,7 +77,32 @@ app.post('/login', (req, res) => {
     })
 })
 
-app.post('/add_student', async (req, res) => {
+app.post("/refresh",async (req,res) => {
+    let refreshToken
+    try {
+        refreshToken = await RefreshModel.findOne({ token: req.body.refreshToken });
+        if (!refreshToken) {
+            return res.status(400).json({ status: 'error'})
+        }
+        const decoded = jwt.verify(req.body.refreshToken,JWT_REFRESH_SECRET)
+        const payload = {
+            _id: decoded._id,
+            name: decoded.name,
+            email: decoded.email,
+            createdAt: Date.now()
+        }
+        const accessToken = jwt.sign(payload,JWT_ACCESS_SECRET,{ expiresIn: '1h'})
+        refreshToken = jwt.sign(payload,JWT_REFRESH_SECRET,{ expiresIn: '1d'})
+        await RefreshModel.create({ token: refreshToken })
+        res.status(200).json({ accessToken, refreshToken })
+    } catch (err) {
+        return res.status(400).json({ status: 'error'})
+    }
+})
+
+const auth = require('./auth.middleware')
+
+app.post('/add_student', auth, async (req, res) => {
     const {name, fname, roll, classs, phnum, addresss} = req.body;
     try {
         await Student.create({
@@ -82,7 +120,7 @@ app.post('/add_student', async (req, res) => {
     }
 })
 
-app.post('/add_teacher', async (req, res) => {
+app.post('/add_teacher', auth, async (req, res) => {
     const {name, subject, classs, ph, addresss} = req.body;
     try {
         await Teacher.create({
@@ -99,7 +137,7 @@ app.post('/add_teacher', async (req, res) => {
     }
 })
 
-app.get('/teacher/edit/:id', async (req, res) => {
+app.get('/teacher/edit/:id', auth, async (req, res) => {
     const {id} = req.params;
     try {
         const dt = await Teacher.findOne({_id: id});
@@ -109,7 +147,7 @@ app.get('/teacher/edit/:id', async (req, res) => {
     }
 })
 
-app.put('/teacher/edit/:id', async (req, res) => {
+app.put('/teacher/edit/:id', auth, async (req, res) => {
     const {id} = req.params;
     try {
         await Teacher.updateOne({_id: id}, req.body);
@@ -119,7 +157,7 @@ app.put('/teacher/edit/:id', async (req, res) => {
     }
 })
 
-app.get('/student/edit/:id', async (req, res) => {
+app.get('/student/edit/:id', auth, async (req, res) => {
     const {id} = req.params;
     try {
         const dt = await Student.findOne({_id: id});
@@ -129,7 +167,7 @@ app.get('/student/edit/:id', async (req, res) => {
     }
 })
 
-app.put('/student/edit/:id', async (req, res) => {
+app.put('/student/edit/:id', auth, async (req, res) => {
     const {id} = req.params;
     try {
         await Student.updateOne({_id: id}, req.body);
@@ -139,7 +177,7 @@ app.put('/student/edit/:id', async (req, res) => {
     }
 })
 
-app.delete('/teacher/:id', async (req, res) => {
+app.delete('/teacher/:id', auth, async (req, res) => {
     
     try {
         await Teacher.deleteOne({_id: req.params.id});
@@ -149,7 +187,7 @@ app.delete('/teacher/:id', async (req, res) => {
     }
 })
 
-app.delete('/student/:id', async (req, res) => {
+app.delete('/student/:id', auth, async (req, res) => {
     try {
         await Student.deleteOne({_id: req.params.id});
         res.send({status: 'student deleted'});
@@ -159,7 +197,7 @@ app.delete('/student/:id', async (req, res) => {
 })
 
 
-app.get('/students', async (req, res) => {
+app.get('/students', auth, async (req, res) => {
     try {
         const dt = await Student.find({});
         res.status(200).json(dt);
@@ -170,7 +208,7 @@ app.get('/students', async (req, res) => {
     }
 })
 
-app.get('/teachers', async (req, res) => {
+app.get('/teachers', auth, async (req, res) => {
     try {
         const dt = await Teacher.find({});
         res.status(200).json(dt);

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie'
 
 const AddStudent = () => {
+  const accessToken = Cookies.get("accessToken")
   const navigate = useNavigate();
   const [newStudent, setNewStudent] = useState({
     name: "",
@@ -22,7 +24,11 @@ const AddStudent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    axios.post("http://localhost:5000/add_student", newStudent).then((res) => {
+    axios.post("http://localhost:5000/add_student", newStudent, {
+      headers: {
+        authorization: `Bearer ${accessToken}`
+      }
+    }).then((res) => {
       alert(res.data.status);
       navigate("/students");
     });

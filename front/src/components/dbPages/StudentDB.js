@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom"
 
 const StudentDB = () => {
   const [datafound, setDatafound] = useState(false);
@@ -56,12 +57,12 @@ const StudentDB = () => {
               Students
             </a>
           </div>
-          <a
-            href="/add_student"
+          <Link
+            to="/add_student"
             className=" text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium px-3 py-1 text-center text-lg"
           >
             Add
-          </a>
+          </Link>
         </div>
         {datafound ? (
           data.length !== 0 ? (

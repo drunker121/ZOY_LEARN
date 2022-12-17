@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Cookie from 'js-cookie'
+import Cookies from "js-cookie";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -24,7 +26,9 @@ const LoginPage = () => {
       alert(res.data.status);
       const { status } = res.data;
       if (status === "login successful") {
-        navigate("/home");
+        Cookies.set("accessToken",res.data.accessToken);
+        Cookies.set("refreshToken",res.data.refreshToken);
+        window.location.reload();
       }
       if (status === "user not found") {
         navigate("/register");
